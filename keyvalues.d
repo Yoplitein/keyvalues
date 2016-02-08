@@ -2,6 +2,8 @@ module keyvalues;
 
 import std.algorithm;
 import std.array;
+import std.conv;
+import std.range;
 import std.string;
 import std.traits;
 import std.uni;
@@ -58,7 +60,49 @@ KeyValue parseKeyValues(string text)
     return text.lex.parse;
 }
 
+Layout deserializeKeyValues(Layout)(KeyValue root)
+{
+    static assert(deserializable!Layout, "Cannot deserialize to " ~ Layout.stringof);
+    
+    Layout result;
+    
+    foreach(fieldName; __traits(allMembers, Layout))
+    {
+        alias FieldType = typeof(__traits(getMember, Layout, fieldName));
+        string serializedName = fieldName //docs use PascalCase for keys
+            .take(1)
+            .map!toUpper
+            .chain(fieldName.drop(1))
+            .to!string
+        ;
+        auto subkeys = root[serializedName];
+        
+        if(subkeys.empty)
+            throw new Exception("Required key %s not found".format(serializedName));
+        
+        static if(is(FieldType == struct))
+            mixin("result." ~ fieldName) = subkeys[0].deserializeKeyValues!FieldType;
+        else static if(decodable!FieldType)
+            mixin("result." ~ fieldName) = subkeys[0].value.to!FieldType;
+        else static if(isDynamicArray!FieldType)
+        {
+            alias FieldElementType = ElementType!FieldType;
+            
+            foreach(subkey; root[serializedName])
+                static if(decodable!FieldElementType)
+                    mixin("result." ~ fieldName) ~= subkey.value.to!FieldElementType;
+                else
+                    mixin("result." ~ fieldName) ~= subkey.deserializeKeyValues!(ElementType!FieldType);
+        }
+    }
+    
+    return result;
+}
+
 private:
+
+enum decodable(Layout) = isScalarType!Layout || isSomeString!Layout;
+enum deserializable(Layout) = is(Layout == struct) && __traits(isPOD, Layout);
 
 enum TokenType
 {
