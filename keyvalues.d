@@ -19,6 +19,16 @@ struct KeyValue
         KeyValue[] subkeys;
     }
     
+    KeyValue[] opIndex(string name)
+    in { assert(hasSubkeys); }
+    body
+    {
+        return subkeys
+            .filter!(subkey => subkey.key == name)
+            .array
+        ;
+    }
+    
     string toString()
     {
         string valueRepr;
