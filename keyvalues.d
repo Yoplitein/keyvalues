@@ -75,26 +75,48 @@ Layout deserializeKeyValues(Layout)(KeyValue root, string path = "root")
             .chain(fieldName.drop(1))
             .to!string
         ;
-        string subpath = path ~= "." ~ fieldName;
+        string subpath = path ~ "." ~ fieldName;
         auto subkeys = root[serializedName];
         
         if(subkeys.empty)
             throw new Exception("Required key %s not found".format(subpath));
         
         static if(is(FieldType == struct))
-            mixin("result." ~ fieldName) = subkeys[0].deserializeKeyValues!FieldType(subpath);
+            mixin("result." ~ fieldName) = subkeys
+                .front
+                .deserializeKeyValues!FieldType(subpath)
+            ;
         else static if(decodable!FieldType)
-            mixin("result." ~ fieldName) = subkeys[0].value.to!FieldType;
+            mixin("result." ~ fieldName) = subkeys
+                .front
+                .value
+                .to!FieldType
+            ;
         else static if(isDynamicArray!FieldType)
         {
             alias FieldElementType = ElementType!FieldType;
             
-            foreach(subkey; root[serializedName])
-                static if(decodable!FieldElementType)
-                    mixin("result." ~ fieldName) ~= subkey.value.to!FieldElementType;
-                else
-                    mixin("result." ~ fieldName) ~= subkey.deserializeKeyValues!(ElementType!FieldType)(subpath);
+            static if(is(FieldElementType == struct))
+            {
+                string subkeysName = FieldElementType.stringof;
+                auto subkeysPath = subpath ~ "." ~ subkeysName;
+                
+                mixin("result." ~ fieldName) = subkeys
+                    .front[subkeysName]
+                    .map!(kv => kv.deserializeKeyValues!FieldElementType(subkeysPath))
+                    .array
+                ;
+            }
+            else if(decodable!FieldElementType)
+                mixin("result." ~ fieldName) = subkeys.front
+                    .map!(kv => kv.value.to!FieldElementType)
+                    .array
+                ;
+            else
+                static assert(false, "Can't deserialize array of " ~ FieldElementType);
         }
+        else
+            static assert(false, "Can't deserialize " ~ FieldType.stringof);
     }
     
     return result;
