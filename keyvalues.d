@@ -60,7 +60,7 @@ KeyValue parseKeyValues(string text)
     return text.lex.parse;
 }
 
-Layout deserializeKeyValues(Layout)(KeyValue root)
+Layout deserializeKeyValues(Layout)(KeyValue root, string path = "root")
 {
     static assert(deserializable!Layout, "Cannot deserialize to " ~ Layout.stringof);
     
@@ -75,13 +75,14 @@ Layout deserializeKeyValues(Layout)(KeyValue root)
             .chain(fieldName.drop(1))
             .to!string
         ;
+        string subpath = path ~= "." ~ fieldName;
         auto subkeys = root[serializedName];
         
         if(subkeys.empty)
-            throw new Exception("Required key %s not found".format(serializedName));
+            throw new Exception("Required key %s not found".format(subpath));
         
         static if(is(FieldType == struct))
-            mixin("result." ~ fieldName) = subkeys[0].deserializeKeyValues!FieldType;
+            mixin("result." ~ fieldName) = subkeys[0].deserializeKeyValues!FieldType(subpath);
         else static if(decodable!FieldType)
             mixin("result." ~ fieldName) = subkeys[0].value.to!FieldType;
         else static if(isDynamicArray!FieldType)
@@ -92,7 +93,7 @@ Layout deserializeKeyValues(Layout)(KeyValue root)
                 static if(decodable!FieldElementType)
                     mixin("result." ~ fieldName) ~= subkey.value.to!FieldElementType;
                 else
-                    mixin("result." ~ fieldName) ~= subkey.deserializeKeyValues!(ElementType!FieldType);
+                    mixin("result." ~ fieldName) ~= subkey.deserializeKeyValues!(ElementType!FieldType)(subpath);
         }
     }
     
