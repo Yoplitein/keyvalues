@@ -55,6 +55,8 @@ struct KeyValue
     }
 }
 
+struct Optional {}
+
 KeyValue parseKeyValues(string text)
 {
     return text.lex.parse;
@@ -68,7 +70,8 @@ Layout deserializeKeyValues(Layout)(KeyValue root, string path = "root")
     
     foreach(fieldName; __traits(allMembers, Layout))
     {
-        alias FieldType = typeof(__traits(getMember, Layout, fieldName));
+        enum getMember = "__traits(getMember, Layout, fieldName)";
+        alias FieldType = typeof(mixin(getMember));
         string serializedName = fieldName //docs use PascalCase for keys
             .take(1)
             .map!toUpper
@@ -77,9 +80,15 @@ Layout deserializeKeyValues(Layout)(KeyValue root, string path = "root")
         ;
         string subpath = path ~ "." ~ fieldName;
         auto subkeys = root[serializedName];
+        bool required = !hasUDA!(mixin(getMember), Optional);
         
         if(subkeys.empty)
-            throw new Exception("Required key %s not found".format(subpath));
+        {
+            if(required)
+                throw new Exception("Required key %s not found".format(subpath));
+            
+            continue;
+        }
         
         static if(is(FieldType == struct))
             mixin("result." ~ fieldName) = subkeys
