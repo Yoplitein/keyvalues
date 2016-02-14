@@ -72,60 +72,66 @@ Layout deserializeKeyValues(Layout)(KeyValue root, string path = "root")
     {
         enum getMember = "__traits(getMember, Layout, fieldName)";
         alias FieldType = typeof(mixin(getMember));
-        string serializedName = fieldName //docs use PascalCase for keys
-            .take(1)
-            .map!toUpper
-            .chain(fieldName.drop(1))
-            .to!string
-        ;
-        string subpath = path ~ "." ~ fieldName;
-        auto subkeys = root[serializedName];
-        bool required = !hasUDA!(mixin(getMember), Optional);
         
-        if(subkeys.empty)
-        {
-            if(required)
-                throw new Exception("Required key %s not found".format(subpath));
-            
+        static if(isCallable!FieldType)
             continue;
-        }
-        
-        static if(is(FieldType == struct))
-            mixin("result." ~ fieldName) = subkeys
-                .front
-                .deserializeKeyValues!FieldType(subpath)
-            ;
-        else static if(decodable!FieldType)
-            mixin("result." ~ fieldName) = subkeys
-                .front
-                .value
-                .to!FieldType
-            ;
-        else static if(isDynamicArray!FieldType)
-        {
-            alias FieldElementType = ElementType!FieldType;
-            
-            static if(is(FieldElementType == struct))
-            {
-                string subkeysName = FieldElementType.stringof;
-                auto subkeysPath = subpath ~ "." ~ subkeysName;
-                
-                mixin("result." ~ fieldName) = subkeys
-                    .front[subkeysName]
-                    .map!(kv => kv.deserializeKeyValues!FieldElementType(subkeysPath))
-                    .array
-                ;
-            }
-            else if(decodable!FieldElementType)
-                mixin("result." ~ fieldName) = subkeys.front
-                    .map!(kv => kv.value.to!FieldElementType)
-                    .array
-                ;
-            else
-                static assert(false, "Can't deserialize array of " ~ FieldElementType);
-        }
         else
-            static assert(false, "Can't deserialize " ~ FieldType.stringof);
+        {
+            string serializedName = fieldName //docs use PascalCase for keys
+                .take(1)
+                .map!toUpper
+                .chain(fieldName.drop(1))
+                .to!string
+            ;
+            string subpath = path ~ "." ~ fieldName;
+            auto subkeys = root[serializedName];
+            bool required = !hasUDA!(mixin(getMember), Optional);
+            
+            if(subkeys.empty)
+            {
+                if(required)
+                    throw new Exception("Required key %s not found".format(subpath));
+                
+                continue;
+            }
+            
+            static if(is(FieldType == struct))
+                mixin("result." ~ fieldName) = subkeys
+                    .front
+                    .deserializeKeyValues!FieldType(subpath)
+                ;
+            else static if(decodable!FieldType)
+                mixin("result." ~ fieldName) = subkeys
+                    .front
+                    .value
+                    .to!FieldType
+                ;
+            else static if(isDynamicArray!FieldType)
+            {
+                alias FieldElementType = ElementType!FieldType;
+                
+                static if(is(FieldElementType == struct))
+                {
+                    string subkeysName = FieldElementType.stringof;
+                    auto subkeysPath = subpath ~ "." ~ subkeysName;
+                    
+                    mixin("result." ~ fieldName) = subkeys
+                        .front[subkeysName]
+                        .map!(kv => kv.deserializeKeyValues!FieldElementType(subkeysPath))
+                        .array
+                    ;
+                }
+                else if(decodable!FieldElementType)
+                    mixin("result." ~ fieldName) = subkeys.front
+                        .map!(kv => kv.value.to!FieldElementType)
+                        .array
+                    ;
+                else
+                    static assert(false, "Can't deserialize array of " ~ FieldElementType);
+            }
+            else
+                static assert(false, "Can't deserialize " ~ FieldType.stringof);
+        }
     }
     
     return result;
