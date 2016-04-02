@@ -1,0 +1,5 @@
+name "keyvalues"
+description "Parser and deserializer for Valve's KeyValues file format"
+copyright "Copyright © 2016, Steven Dwy"
+authors "Yoplitein"
+targetType "library"

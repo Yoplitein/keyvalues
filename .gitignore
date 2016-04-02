@@ -1,0 +1,10 @@
+*.a
+*.exe
+*.lib
+*.o
+*.obj
+*.so
+.dub
+__dummy.html
+docs.json
+dub.selections.json
