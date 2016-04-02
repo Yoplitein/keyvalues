@@ -8,7 +8,7 @@ import std.string;
 import std.traits;
 import std.uni;
 
-import stack;
+import keyvalues.stack;
 
 struct KeyValue
 {
