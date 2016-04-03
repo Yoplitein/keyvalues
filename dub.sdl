@@ -1,5 +1,6 @@
 name "keyvalues"
 description "Parser and deserializer for Valve's KeyValues file format"
 copyright "Copyright © 2016, Steven Dwy"
+license "BSD 2-Clause"
 authors "Yoplitein"
 targetType "library"
