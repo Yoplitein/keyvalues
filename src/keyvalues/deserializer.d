@@ -1,5 +1,6 @@
 module keyvalues.deserializer;
 
+import keyvalues.keyvalue;
 import keyvalues.parser;
 
 private enum decodable(Layout) = isScalarType!Layout || isSomeString!Layout;
