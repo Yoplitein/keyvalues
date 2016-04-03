@@ -1,5 +1,11 @@
 module keyvalues.deserializer;
 
+import std.algorithm;
+import std.conv;
+import std.range;
+import std.string;
+import std.traits;
+
 import keyvalues.keyvalue;
 import keyvalues.parser;
 
