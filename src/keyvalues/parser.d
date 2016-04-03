@@ -8,6 +8,9 @@ import std.uni;
 import keyvalues.keyvalue;
 import keyvalues.stack;
 
+/++
+    Parse a string of KeyValues text into a KeyValue object.
++/
 KeyValue parseKeyValues(string text)
 {
     return text.lex.parse;

@@ -5,8 +5,23 @@ import keyvalues.parser;
 private enum decodable(Layout) = isScalarType!Layout || isSomeString!Layout;
 private enum deserializable(Layout) = is(Layout == struct) && __traits(isPOD, Layout);
 
+/++
+    Attribute for a field of a Layout which may be missing.
++/
 struct Optional {}
 
+/++
+    Deserialize a KeyValues object into the given Layout.
+    
+    A Layout is a struct defining the structure of the KeyValues object.
+    A Layout must be a plain old struct (no fancy constructors),
+    contain only basic types, similarly restricted structs,
+    or arrays of the aforementioned types.
+    
+    Params:
+        root = the object to deserialize
+        path = for internal use only, used to report the path to missing keys
++/
 Layout deserializeKeyValues(Layout)(KeyValue root, string path = "root")
 {
     static assert(deserializable!Layout, "Cannot deserialize to " ~ Layout.stringof);

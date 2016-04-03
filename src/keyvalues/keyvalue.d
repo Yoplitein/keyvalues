@@ -5,17 +5,23 @@ import std.array;
 import std.string;
 import std.traits;
 
+/++
+    In-memory representation of a KeyValues object.
++/
 struct KeyValue
 {
-    string key;
-    bool hasSubkeys;
+    string key; ///The key of this KeyValue.
+    bool hasSubkeys; ///Whether this KeyValue has subkeys.
     
     union
     {
-        string value;
-        KeyValue[] subkeys;
+        string value; ///The value of this KeyValue, if hasSubkeys is false.
+        KeyValue[] subkeys; ///The subkeys of this KeyValue, if hasSubkeys is true.
     }
     
+    /++
+        Returns all subkeys whose key equal name.
+    +/
     KeyValue[] opIndex(string name)
     in { assert(hasSubkeys); }
     body
@@ -26,6 +32,9 @@ struct KeyValue
         ;
     }
     
+    /++
+        Serializes this object back to text.
+    +/
     string toString()
     {
         string valueRepr;
