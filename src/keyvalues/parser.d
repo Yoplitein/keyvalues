@@ -306,3 +306,57 @@ KeyValue parse(Token[] tokens)
     
     return objects.pop;
 }
+
+unittest
+{
+    import std.stdio;
+    
+    auto kv = `abc def`.parseKeyValues;
+    
+    assert(kv.key == "root");
+    assert(kv.hasSubkeys);
+    assert(kv.subkeys.length == 1);
+    
+    kv = kv.subkeys[0];
+    
+    assert(kv.key == "abc");
+    assert(!kv.hasSubkeys);
+    assert(kv.value == "def");
+    
+    kv = `"abc def" ghi`.parseKeyValues.subkeys[0];
+    
+    assert(kv.key == "abc def");
+    assert(!kv.hasSubkeys);
+    assert(kv.value == "ghi");
+    
+    kv = `"abc def\"" ghi`.parseKeyValues.subkeys[0];
+    
+    assert(kv.key == `abc def"`);
+    assert(!kv.hasSubkeys);
+    assert(kv.value == "ghi");
+    
+    kv = `abc { def ghi }`.parseKeyValues.subkeys[0];
+    
+    assert(kv.key == "abc");
+    assert(kv.hasSubkeys);
+    assert(kv.subkeys[0].key == "def");
+    assert(!kv.subkeys[0].hasSubkeys);
+    assert(kv.subkeys[0].value == "ghi");
+    
+    kv = `abc "{" def "}"`.parseKeyValues;
+    
+    assert(kv.key == "root");
+    assert(kv.hasSubkeys);
+    assert(kv.subkeys.length == 2);
+    assert(kv.subkeys[0].key == "abc");
+    assert(!kv.subkeys[0].hasSubkeys);
+    assert(kv.subkeys[0].value == "{");
+    assert(kv.subkeys[1].key == "def");
+    assert(!kv.subkeys[1].hasSubkeys);
+    assert(kv.subkeys[1].value == "}");
+    
+    kv = `abc def abc ghi abc jkl`.parseKeyValues;
+    
+    assert(kv.subkeys.length == 3);
+    assert(kv["abc"].length == 3);
+}
