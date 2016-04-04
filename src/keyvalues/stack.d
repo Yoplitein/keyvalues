@@ -38,3 +38,15 @@ struct Stack(Type)
         return index == 0;
     }
 }
+
+unittest
+{
+    auto stack = Stack!int(2);
+    
+    assert(stack.empty);
+    stack.push(1);
+    assert(!stack.empty);
+    assert(stack.top == 1);
+    assert(stack.pop == 1);
+    assert(stack.empty);
+}
