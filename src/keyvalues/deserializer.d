@@ -103,3 +103,50 @@ Layout deserializeKeyValues(Layout)(KeyValue root, string path = "root")
     
     return result;
 }
+
+unittest
+{
+    struct Test
+    {
+        int abc;
+        string def;
+    }
+    
+    auto parsed = q{
+        Abc 32
+        Def "abc def"
+    }.parseKeyValues;
+    
+    assert(parsed.deserializeKeyValues!Test == Test(32, "abc def"));
+}
+
+unittest
+{
+    struct Repeated
+    {
+        int abc;
+    }
+    
+    struct Test
+    {
+        Repeated[] repeats;
+        string def;
+    }
+    
+    auto parsed = q{
+        Repeats
+        {
+            Repeated
+            {
+                Abc 1
+            }
+            Repeated
+            {
+                Abc 2
+            }
+        }
+        Def "abc def"
+    }.parseKeyValues;
+    
+    assert(parsed.deserializeKeyValues!Test == Test([Repeated(1), Repeated(2)], "abc def"));
+}
