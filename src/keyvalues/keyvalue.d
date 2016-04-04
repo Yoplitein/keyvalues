@@ -33,7 +33,7 @@ struct KeyValue
     }
     
     /++
-        Serializes this object back to text.
+        Returns a pretty printed string representation of this KeyValue.
     +/
     string toString()
     {
@@ -57,6 +57,8 @@ struct KeyValue
             valueRepr.replace("\n", "\n    "),
         );
     }
+    
+    //TODO: method to serialize to KeyValues text
 }
 
 private string formatEscapes(string str)
