@@ -7,7 +7,7 @@ struct Stack(Type)
 
     @disable this();
 
-    this(size_t initialSize = 1)
+    this(size_t initialSize)
     {
         data.length = initialSize;
     }
