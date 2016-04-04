@@ -41,6 +41,12 @@ struct Token
     TokenType type;
     string value;
     Position position;
+    
+    //For testing, ignores Position
+    bool opEquals(typeof(this) other)
+    {
+        return other.type == type && other.value == value;
+    }
 }
 
 struct PositionTracker
@@ -200,6 +206,48 @@ string lexQuotedString(ref PositionTracker keyvaluesText)
     keyvaluesText.popFront; //closing quote
     
     return result.data;
+}
+
+unittest
+{
+    with(TokenType)
+    {
+        assert(
+            `abc def`.lex == [
+                Token(str, "abc"),
+                Token(str, "def"),
+            ]
+        );
+        assert(
+            `"abc def" ghi`.lex == [
+                Token(str, "abc def"),
+                Token(str, "ghi"),
+            ]
+        );
+        assert(
+            `"abc def\"" ghi`.lex == [
+                Token(str, `abc def"`),
+                Token(str, "ghi"),
+            ]
+        );
+        assert(
+            `abc { def ghi }`.lex == [
+                Token(str, "abc"),
+                Token(objectStart),
+                Token(str, "def"),
+                Token(str, "ghi"),
+                Token(objectEnd),
+            ]
+        );
+        assert(
+            `abc "{" def "}"`.lex == [
+                Token(str, "abc"),
+                Token(str, "{"),
+                Token(str, "def"),
+                Token(str, "}"),
+            ]
+        );
+    }
 }
 
 KeyValue parse(Token[] tokens)
